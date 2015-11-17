@@ -98,6 +98,14 @@
 #define	DTEST		0x0040	/* test mode: don't execute any commands */
 #define	DBIT		0x0080	/* bit twiddling shown (long) */
 
+// Templates
+#define	CRONUSER 	"%user%"	/* tag for cron's user */
+#define	HOSTNAME	"%hostname%"	/* tag for cron's hostname*/
+#define	FQDN		"%fqdn%"	/* tag for cron's fqdn*/
+#define	CMD		"%cmd%"		/* extend flag for other debug masks */
+#define	STATUS 		"%status%"	/* extend flag for other debug masks */
+#define	FORKSTATUS 	"%forkstatus%"	/* extend flag for other debug masks */
+
 #define	CRON_TAB(u)	"%s/%s", SPOOL_DIR, u
 #define	REG		register
 #define	PPC_NULL	((char **)NULL)

@@ -129,7 +129,7 @@ child_process(e, u)
 	int		stdin_pipe[2];
 	FILE		*tmpout;
 	register char	*input_data;
-	char		*usernm, *mailto;
+	char		*usernm, *mailto, *mailsubject, *p;
 	int		children = 0;
 	pid_t		job_pid;
 
@@ -153,6 +153,7 @@ child_process(e, u)
 	 */
 	usernm = env_get("LOGNAME", e->envp);
 	mailto = env_get("MAILTO", e->envp);
+	mailsubject = env_get("MAILSUBJECT", e->envp);
 
 	/* Check for arguments */
 	if (mailto) {
@@ -474,6 +475,7 @@ child_process(e, u)
 	/* wait for children to die.
 	 */
 	int status = 0;
+	int execstatus = 0;
 	for (;  children > 0;  children--)
 	{
 		char		msg[256];
@@ -489,6 +491,7 @@ child_process(e, u)
 		}
 		Debug(DPROC, ("[%d] grandchild #%d finished, status=%04x\n",
 			getpid(), pid, WEXITSTATUS(waiter)))
+                execstatus = WEXITSTATUS(waiter);
 
 		if (log_level & CRON_LOG_JOBFAILED) {
 			if (WIFEXITED(waiter) && WEXITSTATUS(waiter)) {
@@ -560,9 +563,28 @@ child_process(e, u)
 	}
 	fprintf(mail, "From: root (Cron Daemon)\n");
 	fprintf(mail, "To: %s\n", mailto);
-	fprintf(mail, "Subject: Cron <%s@%s> %s%s\n",
+	
+	// Generate subject
+	if (mailsubject == NULL) {
+		fprintf(mail, "Subject: Cron <%s@%s> %s%s\n",
 			usernm, first_word(hostname, "."),
 			e->cmd, status?" (failed)":"");
+	} else {
+		if (!strstr(CRONUSER, mailsubject))
+			mailsubject = replace_str(mailsubject, CRONUSER, usernm);
+		if (!(p=strstr(HOSTNAME, mailsubject)))
+			mailsubject = replace_str(mailsubject, HOSTNAME, first_word(hostname, "."));
+		if (!(p=strstr(CMD, mailsubject)))
+			mailsubject = replace_str(mailsubject, CMD, e->cmd);
+		if (!(p=strstr(STATUS, mailsubject)))
+			mailsubject = replace_str(mailsubject, STATUS, execstatus?"failed":"success");
+		if (!(p=strstr(FORKSTATUS, mailsubject)))
+			mailsubject = replace_str(mailsubject, FORKSTATUS, status?"failed":"success");
+		if (!(p=strstr(FQDN, mailsubject)))
+			mailsubject = replace_str(mailsubject, FQDN, hostname);
+		fprintf(mail, "Subject: %s\n", mailsubject);
+	}
+	//
 # if defined(MAIL_DATE)
 	fprintf(mail, "Date: %s\n",
 			arpadate(&StartTime));

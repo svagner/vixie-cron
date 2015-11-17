@@ -236,3 +236,15 @@ setenv(name, value, overwrite)
 	return putenv(tmp);	/* intentionally orphan 'tmp' storage */
 }
 #endif
+
+char *
+replace_str(char *str, char *origin, char *replace) {
+	static char buffer[MAXREPLACEBUF];
+	char *p;
+	if (!(p=strstr(str, origin)))
+		return str;
+	strncpy(buffer, str, p-str);
+	buffer[p-str] = '\0';
+	sprintf(buffer+(p-str), "%s%s", replace, p+strlen(origin));
+	return buffer;
+}

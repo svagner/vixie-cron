@@ -135,3 +135,5 @@
 #if !defined(UNICOS) && !defined(UNIXPC)
 # define HAS_FCHMOD
 #endif
+
+#define MAXREPLACEBUF 4028 /* max length for string origin replace */
