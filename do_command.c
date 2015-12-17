@@ -570,19 +570,28 @@ child_process(e, u)
 			usernm, first_word(hostname, "."),
 			e->cmd, status?" (failed)":"");
 	} else {
-		if (!strstr(CRONUSER, mailsubject))
-			mailsubject = replace_str(mailsubject, CRONUSER, usernm);
-		if (!(p=strstr(HOSTNAME, mailsubject)))
-			mailsubject = replace_str(mailsubject, HOSTNAME, first_word(hostname, "."));
-		if (!(p=strstr(CMD, mailsubject)))
-			mailsubject = replace_str(mailsubject, CMD, e->cmd);
-		if (!(p=strstr(STATUS, mailsubject)))
-			mailsubject = replace_str(mailsubject, STATUS, execstatus?"failed":"success");
-		if (!(p=strstr(FORKSTATUS, mailsubject)))
-			mailsubject = replace_str(mailsubject, FORKSTATUS, status?"failed":"success");
-		if (!(p=strstr(FQDN, mailsubject)))
-			mailsubject = replace_str(mailsubject, FQDN, hostname);
-		fprintf(mail, "Subject: %s\n", mailsubject);
+		char buffer[MAXREPLACEBUF];
+		memset(buffer, 0, MAXREPLACEBUF);
+		if (strnlen(mailsubject, MAXREPLACEBUF+1) > MAXREPLACEBUF) {
+			fprintf(mail, "Subject: Cron <%s@%s> %s%s\n",
+				usernm, first_word(hostname, "."),
+				e->cmd, status?" (failed)":"");
+		} else {
+			strncpy(buffer, mailsubject, strlen(mailsubject));
+			if (strstr(buffer, CRONUSER))
+				replace_str(buffer, MAXREPLACEBUF, CRONUSER, usernm);
+			if (strstr(buffer, HOSTNAME))
+				replace_str(buffer, MAXREPLACEBUF, HOSTNAME, first_word(hostname, "."));
+			if (strstr(buffer, CMD))
+				replace_str(buffer, MAXREPLACEBUF, CMD, e->cmd);
+			if (strstr(buffer, STATUS))
+				replace_str(buffer, MAXREPLACEBUF, STATUS, execstatus?"failed":"success");
+			if (strstr(buffer, FORKSTATUS))
+				replace_str(buffer, MAXREPLACEBUF, FORKSTATUS, status?"failed":"success");
+			if (strstr(buffer, FQDN))
+				replace_str(buffer, MAXREPLACEBUF, FQDN, hostname);
+			fprintf(mail, "Subject: %s\n", buffer);
+		}
 	}
 	//
 # if defined(MAIL_DATE)

@@ -237,14 +237,17 @@ setenv(name, value, overwrite)
 }
 #endif
 
-char *
-replace_str(char *str, char *origin, char *replace) {
-	static char buffer[MAXREPLACEBUF];
+void
+replace_str(char *str, int len, char *origin, char *replace) {
 	char *p;
+	char buf[len];
+	memset(buf, 0, len);
+	if (strnlen(str, len+1) > len)
+		return;
 	if (!(p=strstr(str, origin)))
-		return str;
-	strncpy(buffer, str, p-str);
-	buffer[p-str] = '\0';
-	sprintf(buffer+(p-str), "%s%s", replace, p+strlen(origin));
-	return buffer;
+		return;
+	strncpy(buf, str, p-str);
+	sprintf(buf+(p-str), "%s%s", replace, p+strlen(origin));
+	strncpy(str, buf, strlen(buf));
+	memset(str+strlen(buf), 0, len-strlen(buf));
 }
